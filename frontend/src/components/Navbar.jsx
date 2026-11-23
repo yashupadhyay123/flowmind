@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Menu, X, Sparkles } from 'lucide-react'
+import logo from '../assets/logo.svg'
 
 export default function Navbar() {
   const [open, setOpen] = useState(false)
@@ -14,10 +15,9 @@ export default function Navbar() {
     <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/80 backdrop-blur">
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
         {/* Logo */}
-        <a href="#" className="flex items-center gap-2 text-xl font-bold text-slate-900">
-          <Sparkles className="h-6 w-6 text-indigo-600" />
-          FlowMind
-        </a>
+       <a href="#">
+  <img src={logo} alt="FlowMind" className="h-8" />
+</a>
 
         {/* Desktop links */}
         <div className="hidden items-center gap-8 md:flex">
