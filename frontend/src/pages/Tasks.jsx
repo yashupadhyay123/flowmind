@@ -42,7 +42,7 @@ export default function Tasks() {
     <div className="flex min-h-screen bg-slate-50">
       <Sidebar />
 
-      <main className="flex-1 p-6 md:p-8">
+      <main className="flex-1 p-6 pt-20 md:p-8">
         <h1 className="text-2xl font-bold text-slate-900">Task Board</h1>
         <p className="mt-1 text-slate-500">Plan your work and move tasks as you go.</p>
 

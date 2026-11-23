@@ -40,7 +40,7 @@ export default function Analytics() {
     <div className="flex min-h-screen bg-slate-50">
       <Sidebar />
 
-      <main className="flex-1 p-6 md:p-8">
+      <main className="flex-1 p-6 pt-20 md:p-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold text-slate-900">Analytics</h1>
