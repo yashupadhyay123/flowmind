@@ -5,7 +5,7 @@ import Dashboard from './pages/Dashboard'
 import Analyzer from './pages/Analyzer'
 import Tasks from './pages/Tasks'
 import Analytics from './pages/Analytics'
-
+import Settings from './pages/Settings'
 
 
 export default function App() {
@@ -18,7 +18,8 @@ export default function App() {
         <Route path="/analyzer" element={<Analyzer />} />
         <Route path="/tasks" element={<Tasks />} />
         <Route path="/analytics" element={<Analytics />} />
-        
+        <Route path="/settings" element={<Settings />} />        
+
       </Routes>
     </BrowserRouter>
   )
