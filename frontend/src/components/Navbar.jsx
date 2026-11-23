@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Menu, X, Sparkles } from 'lucide-react'
 import logo from '../assets/logo.svg'
+import { Link } from 'react-router-dom'
 
 export default function Navbar() {
   const [open, setOpen] = useState(false)
@@ -34,7 +35,9 @@ export default function Navbar() {
             href="#"
             className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
           >
-            Get Started
+            <Link to="/login" className="text-sm font-medium text-slate-500 hover:text-slate-900">
+  Login
+</Link>
           </a>
         </div>
 
