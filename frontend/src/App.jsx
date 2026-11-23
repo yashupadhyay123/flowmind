@@ -4,6 +4,8 @@ import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Analyzer from './pages/Analyzer'
 import Tasks from './pages/Tasks'
+import Analytics from './pages/Analytics'
+
 
 
 export default function App() {
@@ -15,6 +17,8 @@ export default function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/analyzer" element={<Analyzer />} />
         <Route path="/tasks" element={<Tasks />} />
+        <Route path="/analytics" element={<Analytics />} />
+        
       </Routes>
     </BrowserRouter>
   )
