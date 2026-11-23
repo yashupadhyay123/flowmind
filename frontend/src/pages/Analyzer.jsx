@@ -4,25 +4,47 @@ import Sidebar from '../components/Sidebar'
 
 // Mock AI: replaced by a FastAPI call later
 function mockAnalyze(text) {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const words = text.trim().split(/\s+/).length
-      resolve({
-        summary: `Your text has about ${words} words. It covers planning, deadlines, and next steps, and the main focus is getting the work finished on time.`,
-        keyPoints: [
-          'The main goal is clearly defined',
-          'Deadlines are mentioned and need to be tracked',
-          'Several tasks depend on other people',
-        ],
-        actions: [
-          'Set a due date for each task',
-          'Send a follow-up message to the team',
-          'Block focus time for the hardest task',
-        ],
-      })
-    }, 1200)
-  })
-}
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const clean = text.trim()
+        const wordCount = clean.split(/\s+/).length
+        const sentences = clean
+          .split(/(?<=[.!?])\s+|\n+/)
+          .map((s) => s.trim())
+          .filter(Boolean)
+  
+        // Detect times and days in the text
+        const times = clean.match(/\b\d{1,2}(:\d{2})?\s?(am|pm)\b/gi) || []
+        const days =
+          clean.match(
+            /\b(today|tonight|tomorrow|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/gi
+          ) || []
+  
+        // Sentences that sound like tasks
+        const actionWords =
+          /\b(need to|should|must|will|let's|remember|call|send|finish|buy|book|prepare|write|review|ride|go)\b/i
+        const actionSentences = sentences.filter((s) => actionWords.test(s))
+  
+        // Summary: quote the start of the text
+        const first = sentences[0] || clean
+        const summary = `${first}${/[.!?]$/.test(first) ? '' : '.'} (${wordCount} words, ${sentences.length} ${
+          sentences.length === 1 ? 'sentence' : 'sentences'
+        })`
+  
+        // Key points
+        const keyPoints = sentences.slice(0, 3)
+        if (times.length) keyPoints.push(`Time mentioned: ${[...new Set(times)].join(', ')}`)
+        if (days.length) keyPoints.push(`Day mentioned: ${[...new Set(days)].join(', ')}`)
+  
+        // Action items
+        const actions = actionSentences.slice(0, 3)
+        if (times.length) actions.push(`Set a reminder for ${times[0]}`)
+        if (actions.length === 0) actions.push('Add this to your task board')
+  
+        resolve({ summary, keyPoints, actions })
+      }, 1200)
+    })
+  }
 
 export default function Analyzer() {
   const [text, setText] = useState('')
