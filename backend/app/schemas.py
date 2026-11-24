@@ -1,6 +1,6 @@
 from datetime import date, datetime
 from typing import List, Literal, Optional
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 Status = Literal["To Do", "In Progress", "Done"]
 Priority = Literal["Low", "Medium", "High"]
@@ -43,3 +43,18 @@ class AnalysisOut(BaseModel):
     key_points: List[str]
     actions: List[str]
     created_at: datetime
+
+
+class SessionCreate(BaseModel):
+    minutes: int = Field(ge=1, le=600)
+    task_id: Optional[int] = None
+
+
+class SessionOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    minutes: int
+    started_at: datetime
+
+

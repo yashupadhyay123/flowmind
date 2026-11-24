@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from .routers import tasks, analyze, stats
 
 from .database import engine, Base
 from . import models
@@ -19,6 +20,8 @@ app.add_middleware(
 
 app.include_router(tasks.router)
 app.include_router(analyze.router)
+app.include_router(stats.router)
+
 
 
 @app.get("/")

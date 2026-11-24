@@ -19,4 +19,8 @@ export const api = {
   analyze: (text) =>
   request('/analyze', { method: 'POST', body: JSON.stringify({ text }) }),
 getAnalyses: () => request('/analyze'),
+getStats: () => request('/stats'),
+saveSession: (minutes) =>
+  request('/sessions', { method: 'POST', body: JSON.stringify({ minutes }) }),
+  
 }
