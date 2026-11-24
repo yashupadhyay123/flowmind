@@ -61,3 +61,57 @@ def get_stats(db: Session = Depends(get_db)):
     }
 
 
+@router.get("/analytics")
+def get_analytics(period: str = "week", db: Session = Depends(get_db)):
+    today = date.today()
+
+    minutes_by_day = {}
+    for s in db.query(models.FocusSession).all():
+        d = s.started_at.date()
+        minutes_by_day[d] = minutes_by_day.get(d, 0) + s.minutes
+
+    tasks_by_day = {}
+    done = db.query(models.Task).filter(models.Task.completed_at.isnot(None)).all()
+    for t in done:
+        d = t.completed_at.date()
+        tasks_by_day[d] = tasks_by_day.get(d, 0) + 1
+
+    data = []
+    if period == "month":
+        # 4 blocks of 7 days, oldest first
+        for w in range(3, -1, -1):
+            end = today - timedelta(days=7 * w)
+            days = [end - timedelta(days=i) for i in range(7)]
+            data.append(
+                {
+                    "label": f"Week {4 - w}",
+                    "focus": round(sum(minutes_by_day.get(d, 0) for d in days) / 60, 1),
+                    "tasks": sum(tasks_by_day.get(d, 0) for d in days),
+                }
+            )
+    else:
+        for i in range(6, -1, -1):
+            d = today - timedelta(days=i)
+            data.append(
+                {
+                    "label": d.strftime("%a"),
+                    "focus": round(minutes_by_day.get(d, 0) / 60, 1),
+                    "tasks": tasks_by_day.get(d, 0),
+                }
+            )
+
+    status = {"Done": 0, "In Progress": 0, "To Do": 0}
+    for name, count in (
+        db.query(models.Task.status, func.count(models.Task.id))
+        .group_by(models.Task.status)
+        .all()
+    ):
+        status[str(name)] = count
+
+    return {
+        "data": data,
+        "status": [{"name": k, "value": v} for k, v in status.items()],
+    }
+
+
+

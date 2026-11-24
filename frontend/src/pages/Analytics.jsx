@@ -1,40 +1,40 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts'
 import Sidebar from '../components/Sidebar'
+import { api } from '../lib/api'
 
-const weeklyData = [
-  { label: 'Mon', focus: 2.5, tasks: 4 },
-  { label: 'Tue', focus: 3.8, tasks: 6 },
-  { label: 'Wed', focus: 2.1, tasks: 3 },
-  { label: 'Thu', focus: 4.2, tasks: 7 },
-  { label: 'Fri', focus: 3.5, tasks: 5 },
-  { label: 'Sat', focus: 1.2, tasks: 2 },
-  { label: 'Sun', focus: 1.0, tasks: 1 },
-]
-
-const monthlyData = [
-  { label: 'Week 1', focus: 14, tasks: 22 },
-  { label: 'Week 2', focus: 18, tasks: 27 },
-  { label: 'Week 3', focus: 16, tasks: 24 },
-  { label: 'Week 4', focus: 21, tasks: 31 },
-]
-
-const taskStatus = [
-  { name: 'Done', value: 24, color: '#14B8A6' },
-  { name: 'In Progress', value: 8, color: '#4F46E5' },
-  { name: 'To Do', value: 12, color: '#CBD5E1' },
-]
+const statusColors = {
+  Done: '#14B8A6',
+  'In Progress': '#4F46E5',
+  'To Do': '#CBD5E1',
+}
 
 export default function Analytics() {
   const [range, setRange] = useState('week')
-  const data = range === 'week' ? weeklyData : monthlyData
+  const [data, setData] = useState([])
+  const [status, setStatus] = useState([])
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    setError('')
+    api
+      .getAnalytics(range)
+      .then((res) => {
+        setData(res.data)
+        setStatus(res.status)
+      })
+      .catch(() => setError('Could not load analytics. Is the backend running?'))
+  }, [range])
 
   const totalFocus = data.reduce((sum, d) => sum + d.focus, 0).toFixed(1)
   const totalTasks = data.reduce((sum, d) => sum + d.tasks, 0)
-  const best = data.reduce((a, b) => (b.focus > a.focus ? b : a))
+  const best =
+    data.length && Number(totalFocus) > 0
+      ? data.reduce((a, b) => (b.focus > a.focus ? b : a)).label
+      : '—'
 
   return (
     <div className="flex min-h-screen bg-slate-50">
@@ -63,11 +63,15 @@ export default function Analytics() {
           </div>
         </div>
 
+        {error && (
+          <p className="mt-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>
+        )}
+
         {/* Summary numbers */}
         <div className="mt-8 grid gap-6 sm:grid-cols-3">
           <Summary label="Total focus hours" value={`${totalFocus}h`} />
           <Summary label="Tasks completed" value={totalTasks} />
-          <Summary label="Best period" value={best.label} />
+          <Summary label="Best period" value={best} />
         </div>
 
         {/* Charts */}
@@ -86,7 +90,7 @@ export default function Analytics() {
             <LineChart data={data}>
               <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
               <XAxis dataKey="label" stroke="#64748B" fontSize={12} />
-              <YAxis stroke="#64748B" fontSize={12} />
+              <YAxis stroke="#64748B" fontSize={12} allowDecimals={false} />
               <Tooltip />
               <Line type="monotone" dataKey="tasks" stroke="#14B8A6" strokeWidth={2} />
             </LineChart>
@@ -98,9 +102,9 @@ export default function Analytics() {
           <div className="mt-4 h-64">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie data={taskStatus} dataKey="value" nameKey="name" innerRadius={60} outerRadius={90}>
-                  {taskStatus.map((s) => (
-                    <Cell key={s.name} fill={s.color} />
+                <Pie data={status} dataKey="value" nameKey="name" innerRadius={60} outerRadius={90}>
+                  {status.map((s) => (
+                    <Cell key={s.name} fill={statusColors[s.name]} />
                   ))}
                 </Pie>
                 <Tooltip />

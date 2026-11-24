@@ -22,5 +22,7 @@ getAnalyses: () => request('/analyze'),
 getStats: () => request('/stats'),
 saveSession: (minutes) =>
   request('/sessions', { method: 'POST', body: JSON.stringify({ minutes }) }),
+  getAnalytics: (period) => request(`/analytics?period=${period}`),
   
+
 }

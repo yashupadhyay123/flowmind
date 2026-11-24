@@ -33,6 +33,7 @@ class Task(Base):
     )
     due_date = Column(Date, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+    completed_at = Column(DateTime, nullable=True)
 
 
 class FocusSession(Base):
