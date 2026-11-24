@@ -1,7 +1,10 @@
+from .database import engine, Base
+from . import models
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="FlowMind API")
+Base.metadata.create_all(bind=engine)
 
 # Allow the React app to call this API
 app.add_middleware(
