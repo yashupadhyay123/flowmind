@@ -53,5 +53,5 @@ class Analysis(Base):
     input_text = Column(Text, nullable=False)
     summary = Column(Text)
     key_points = Column(Text)
+    actions = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow)
-    

@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .database import engine, Base
 from . import models
-from .routers import tasks
+from .routers import tasks, analyze
 
 app = FastAPI(title="FlowMind API")
 
@@ -18,6 +18,7 @@ app.add_middleware(
 )
 
 app.include_router(tasks.router)
+app.include_router(analyze.router)
 
 
 @app.get("/")

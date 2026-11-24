@@ -16,4 +16,7 @@ export const api = {
   updateTask: (id, data) =>
     request(`/tasks/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   deleteTask: (id) => request(`/tasks/${id}`, { method: 'DELETE' }),
+  analyze: (text) =>
+  request('/analyze', { method: 'POST', body: JSON.stringify({ text }) }),
+getAnalyses: () => request('/analyze'),
 }

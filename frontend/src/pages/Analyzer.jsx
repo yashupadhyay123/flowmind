@@ -1,61 +1,37 @@
-import { useState } from 'react'
-import { Sparkles, Loader2, ListChecks, Lightbulb } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Sparkles, Loader2, ListChecks, Lightbulb, History } from 'lucide-react'
 import Sidebar from '../components/Sidebar'
-
-// Mock AI: replaced by a FastAPI call later
-function mockAnalyze(text) {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const clean = text.trim()
-        const wordCount = clean.split(/\s+/).length
-        const sentences = clean
-          .split(/(?<=[.!?])\s+|\n+/)
-          .map((s) => s.trim())
-          .filter(Boolean)
-  
-        // Detect times and days in the text
-        const times = clean.match(/\b\d{1,2}(:\d{2})?\s?(am|pm)\b/gi) || []
-        const days =
-          clean.match(
-            /\b(today|tonight|tomorrow|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/gi
-          ) || []
-  
-        // Sentences that sound like tasks
-        const actionWords =
-          /\b(need to|should|must|will|let's|remember|call|send|finish|buy|book|prepare|write|review|ride|go)\b/i
-        const actionSentences = sentences.filter((s) => actionWords.test(s))
-  
-        // Summary: quote the start of the text
-        const first = sentences[0] || clean
-        const summary = `${first}${/[.!?]$/.test(first) ? '' : '.'} (${wordCount} words, ${sentences.length} ${
-          sentences.length === 1 ? 'sentence' : 'sentences'
-        })`
-  
-        // Key points
-        const keyPoints = sentences.slice(0, 3)
-        if (times.length) keyPoints.push(`Time mentioned: ${[...new Set(times)].join(', ')}`)
-        if (days.length) keyPoints.push(`Day mentioned: ${[...new Set(days)].join(', ')}`)
-  
-        // Action items
-        const actions = actionSentences.slice(0, 3)
-        if (times.length) actions.push(`Set a reminder for ${times[0]}`)
-        if (actions.length === 0) actions.push('Add this to your task board')
-  
-        resolve({ summary, keyPoints, actions })
-      }, 1200)
-    })
-  }
+import { api } from '../lib/api'
 
 export default function Analyzer() {
   const [text, setText] = useState('')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
+  const [past, setPast] = useState([])
+  const [error, setError] = useState('')
+
+  const loadHistory = () =>
+    api.getAnalyses().then(setPast).catch(() => {})
+
+  useEffect(() => {
+    loadHistory()
+  }, [])
 
   const handleAnalyze = async () => {
     setLoading(true)
     setResult(null)
-    const data = await mockAnalyze(text)
-    setResult(data)
+    setError('')
+    try {
+      const data = await api.analyze(text)
+      setResult({
+        summary: data.summary,
+        keyPoints: data.key_points,
+        actions: data.actions,
+      })
+      loadHistory()
+    } catch {
+      setError('Analysis failed. Is the backend running?')
+    }
     setLoading(false)
   }
 
@@ -68,6 +44,10 @@ export default function Analyzer() {
         <p className="mt-1 text-slate-500">
           Paste your notes and get a summary, key points, and action items.
         </p>
+
+        {error && (
+          <p className="mt-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>
+        )}
 
         <div className="mt-8 grid gap-6 lg:grid-cols-2">
           {/* Input panel */}
@@ -101,9 +81,7 @@ export default function Analyzer() {
             <h2 className="font-semibold text-slate-900">Results</h2>
 
             {!result && !loading && (
-              <p className="mt-6 text-slate-400">
-                Your analysis will appear here.
-              </p>
+              <p className="mt-6 text-slate-400">Your analysis will appear here.</p>
             )}
 
             {loading && (
@@ -126,8 +104,8 @@ export default function Analyzer() {
                     <Lightbulb className="h-4 w-4" /> Key points
                   </h3>
                   <ul className="mt-2 list-disc space-y-1 pl-5 text-slate-700">
-                    {result.keyPoints.map((p) => (
-                      <li key={p}>{p}</li>
+                    {result.keyPoints.map((p, i) => (
+                      <li key={i}>{p}</li>
                     ))}
                   </ul>
                 </div>
@@ -137,8 +115,8 @@ export default function Analyzer() {
                     <ListChecks className="h-4 w-4" /> Action items
                   </h3>
                   <ul className="mt-2 space-y-2">
-                    {result.actions.map((a) => (
-                      <li key={a} className="flex items-center gap-2 text-slate-700">
+                    {result.actions.map((a, i) => (
+                      <li key={i} className="flex items-center gap-2 text-slate-700">
                         <input type="checkbox" className="h-4 w-4 accent-indigo-600" />
                         {a}
                       </li>
@@ -149,8 +127,39 @@ export default function Analyzer() {
             )}
           </div>
         </div>
+
+        {/* History panel */}
+        <div className="mt-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 className="flex items-center gap-2 font-semibold text-slate-900">
+            <History className="h-4 w-4" /> Recent analyses
+          </h2>
+          {past.length === 0 ? (
+            <p className="mt-4 text-slate-400">Nothing yet.</p>
+          ) : (
+            <ul className="mt-4 divide-y divide-slate-100">
+              {past.map((a) => (
+                <li key={a.id}>
+                  <button
+                    onClick={() =>
+                      setResult({
+                        summary: a.summary,
+                        keyPoints: a.key_points,
+                        actions: a.actions,
+                      })
+                    }
+                    className="w-full py-3 text-left hover:bg-slate-50"
+                  >
+                    <p className="truncate text-slate-700">{a.input_text}</p>
+                    <p className="text-xs text-slate-400">
+                      {new Date(a.created_at).toLocaleString()}
+                    </p>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </main>
     </div>
   )
 }
-
