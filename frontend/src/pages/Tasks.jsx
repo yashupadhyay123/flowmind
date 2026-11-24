@@ -1,42 +1,56 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Plus } from 'lucide-react'
 import Sidebar from '../components/Sidebar'
 import TaskCard from '../components/TaskCard'
+import { api } from '../lib/api'
 
 const columns = ['To Do', 'In Progress', 'Done']
 
-const initialTasks = [
-  { id: 1, title: 'Design the settings page', status: 'To Do', priority: 'Medium' },
-  { id: 2, title: 'Write weekly report', status: 'In Progress', priority: 'High' },
-  { id: 3, title: 'Review project proposal', status: 'Done', priority: 'Low' },
-]
-
 export default function Tasks() {
-  const [tasks, setTasks] = useState(initialTasks)
+  const [tasks, setTasks] = useState([])
   const [title, setTitle] = useState('')
   const [priority, setPriority] = useState('Medium')
+  const [error, setError] = useState('')
 
-  const addTask = (e) => {
+  // Load tasks from the API when the page opens
+  useEffect(() => {
+    api
+      .getTasks()
+      .then(setTasks)
+      .catch(() => setError('Could not load tasks. Is the backend running?'))
+  }, [])
+
+  const addTask = async (e) => {
     e.preventDefault()
     if (!title.trim()) return
-    setTasks([
-      ...tasks,
-      { id: Date.now(), title: title.trim(), status: 'To Do', priority },
-    ])
-    setTitle('')
+    try {
+      const created = await api.createTask({ title: title.trim(), priority })
+      setTasks([...tasks, created])
+      setTitle('')
+    } catch {
+      setError('Could not add the task.')
+    }
   }
 
-  const moveTask = (id, direction) => {
-    setTasks(
-      tasks.map((t) => {
-        if (t.id !== id) return t
-        const index = columns.indexOf(t.status) + direction
-        return { ...t, status: columns[index] }
-      })
-    )
+  const moveTask = async (id, direction) => {
+    const task = tasks.find((t) => t.id === id)
+    const newStatus = columns[columns.indexOf(task.status) + direction]
+    try {
+      const updated = await api.updateTask(id, { status: newStatus })
+      setTasks(tasks.map((t) => (t.id === id ? updated : t)))
+    } catch {
+      setError('Could not move the task.')
+    }
   }
 
-  const deleteTask = (id) => setTasks(tasks.filter((t) => t.id !== id))
+  const deleteTask = async (id) => {
+    try {
+      await api.deleteTask(id)
+      setTasks(tasks.filter((t) => t.id !== id))
+    } catch {
+      setError('Could not delete the task.')
+    }
+  }
 
   return (
     <div className="flex min-h-screen bg-slate-50">
@@ -45,6 +59,10 @@ export default function Tasks() {
       <main className="flex-1 p-6 pt-20 md:p-8">
         <h1 className="text-2xl font-bold text-slate-900">Task Board</h1>
         <p className="mt-1 text-slate-500">Plan your work and move tasks as you go.</p>
+
+        {error && (
+          <p className="mt-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>
+        )}
 
         {/* Add task form */}
         <form onSubmit={addTask} className="mt-8 flex flex-col gap-3 sm:flex-row">
